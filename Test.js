@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 
+const regex = /^[a-zA-Z]:\\\\(?:[^<>:"/\\|?*]+\\\\)*[^<>:"/\\|?*]+(\\\\build\\\\|$)/;
 export function activate(context: vscode.ExtensionContext) {
     // Register the command to show the panel
     let disposable = vscode.commands.registerCommand('extension.createWorkspace', () => {
