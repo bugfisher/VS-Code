@@ -56,3 +56,64 @@ function addWorkspaceToActivityBar(workspaceName: string) {
     vscode.commands.executeCommand('workbench.view.extension.myExtensionWorkspaceView');
     vscode.window.showInformationMessage(`Workspace '${workspaceName}' created and added to the Activity Bar.`);
 }
+
+
+
+
+import * as vscode from 'vscode';
+import * as path from 'path';
+
+export class FileTreeDataProvider implements vscode.TreeDataProvider<FileItem> {
+    private _onDidChangeTreeData: vscode.EventEmitter<FileItem | undefined> = new vscode.EventEmitter<FileItem | undefined>();
+    readonly onDidChangeTreeData: vscode.Event<FileItem | undefined> = this._onDidChangeTreeData.event;
+
+    refresh(): void {
+        this._onDidChangeTreeData.fire(undefined);
+    }
+
+    getTreeItem(element: FileItem): vscode.TreeItem | Thenable<vscode.TreeItem> {
+        return element;
+    }
+
+    getChildren(element?: FileItem | undefined): vscode.ProviderResult<FileItem[]> {
+        // Get all the workspace folders
+        const workspaceFolders = vscode.workspace.workspaceFolders;
+
+        if (workspaceFolders) {
+            const files: FileItem[] = [];
+            workspaceFolders.forEach(folder => {
+                const folderPath = folder.uri.fsPath;
+                const filesInFolder = vscode.workspace.fs.readDirectory(vscode.Uri.file(folderPath));
+                filesInFolder.then((items) => {
+                    items.forEach(([name, type]) => {
+                        const filePath = path.join(folderPath, name);
+                        const fileItem = new FileItem(name, type, filePath);
+                        files.push(fileItem);
+                    });
+                });
+            });
+            return files;
+        }
+
+        return [];
+    }
+}
+
+class FileItem extends vscode.TreeItem {
+    constructor(
+        public readonly label: string,
+        public readonly type: vscode.FileType,
+        public readonly resourceUri: vscode.Uri
+    ) {
+        super(label, vscode.TreeItemCollapsibleState.None);
+    }
+
+    iconPath = {
+        light: path.join(__filename, '..', '..', 'resources', 'light', 'green-file-icon.svg'),
+        dark: path.join(__filename, '..', '..', 'resources', 'dark', 'green-file-icon.svg')
+    };
+
+    contextValue = 'file';
+}
+
+
